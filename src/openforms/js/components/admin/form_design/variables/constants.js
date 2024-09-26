@@ -12,6 +12,7 @@ const COMPONENT_DATATYPES = {
   npFamilyMembers: 'object',
   map: 'array',
   editgrid: 'array',
+  // TODO: productPrices?
 };
 
 const DATATYPES_CHOICES = [
