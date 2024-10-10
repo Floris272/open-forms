@@ -2757,12 +2757,6 @@
       "value": "Whether the user is allowed to submit this form or not, and whether the overview page should be shown if they are not."
     }
   ],
-  "QXsAuR": [
-    {
-      "type": 0,
-      "value": "Product to fetch prices for"
-    }
-  ],
   "QaPqxz": [
     {
       "type": 0,
@@ -5727,12 +5721,6 @@
     {
       "type": 0,
       "value": "Do not display the configured label and top line as the header in the fieldset."
-    }
-  ],
-  "uuKVtO": [
-    {
-      "type": 0,
-      "value": "Product"
     }
   ],
   "vAZDY4": [
