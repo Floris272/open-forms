@@ -192,13 +192,25 @@ def validate_price_option(
             )
         )
 
-    if price_components and not hasattr(form_product, "open_producten_price"):
-        raise ValidationError(
-            _(
-                "Product selected for productPrice component does not have a price from Open Producten"
+    if price_components:
+        if not form_product:
+            raise ValidationError(
+                _("No product has been selected for productPrice component")
             )
-        )
-    if not price_components and hasattr(form_product, "open_producten_price"):
+
+        if not form_product.price_options:
+            raise ValidationError(
+                _(
+                    "Product selected for productPrice component does not have a price from Open Producten"
+                )
+            )
+
+        if not price_components[0]["validate"]["required"]:
+            raise ValidationError(
+                _("productPrice component is not currently not required")
+            )
+
+    elif not price_components and form_product and form_product.open_producten_price:
         raise ValidationError(
             _("Form has product with price options but not a productPrice component")
         )
