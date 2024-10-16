@@ -2774,12 +2774,6 @@
       "value": "Geeft aan of de gebruiker het formulier kan inzenden of niet, en of een overzichtspagina getoond wordt indien niet."
     }
   ],
-  "QXsAuR": [
-    {
-      "type": 0,
-      "value": "Product waarvoor prijzen worden opgehaald"
-    }
-  ],
   "QaPqxz": [
     {
       "type": 0,
@@ -5749,12 +5743,6 @@
     {
       "type": 0,
       "value": "Verberg de koptekst en de lijn boven de veldengroep in het formulier."
-    }
-  ],
-  "uuKVtO": [
-    {
-      "type": 0,
-      "value": "Product"
     }
   ],
   "vAZDY4": [

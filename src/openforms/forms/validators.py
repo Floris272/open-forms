@@ -172,3 +172,45 @@ def validate_no_duplicate_keys_across_steps(
                 errors=get_text_list(errors, ", ")
             )
         )
+
+
+def validate_price_option(
+    form_product, current_form_definition, other_form_definitions
+):
+    form_definitions = [current_form_definition] + other_form_definitions
+
+    price_components = []
+    for form_definition in form_definitions:
+        for component in form_definition.configuration["components"]:
+            if component["type"] == "productPrice":
+                price_components.append(component)
+
+    if len(price_components) > 1:
+        raise ValidationError(
+            _(
+                "Currently only a single product price component is allowed be added to a form."
+            )
+        )
+
+    if price_components:
+        if not form_product:
+            raise ValidationError(
+                _("No product has been selected for productPrice component")
+            )
+
+        if not form_product.price_options:
+            raise ValidationError(
+                _(
+                    "Product selected for productPrice component does not have a price from Open Producten"
+                )
+            )
+
+        if not price_components[0]["validate"]["required"]:
+            raise ValidationError(
+                _("productPrice component is not currently not required")
+            )
+
+    elif not price_components and form_product and form_product.open_producten_price:
+        raise ValidationError(
+            _("Form has product with price options but not a productPrice component")
+        )
