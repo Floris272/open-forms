@@ -198,7 +198,7 @@ def validate_price_option(
                 _("No product has been selected for productPrice component")
             )
 
-        if not form_product.price_options:
+        if not form_product.prices.count():
             raise ValidationError(
                 _(
                     "Product selected for productPrice component does not have a price from Open Producten"

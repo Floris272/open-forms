@@ -2,7 +2,7 @@ import factory.fuzzy
 
 from openforms.products.tests.factories import ProductFactory
 
-from ..models import Price, PriceOption
+from ..models import Field, Price, PriceOption
 
 
 class PriceFactory(factory.django.DjangoModelFactory):
@@ -22,3 +22,12 @@ class PriceOptionFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = PriceOption
+
+
+class FieldFactory(factory.django.DjangoModelFactory):
+    name = factory.Sequence(lambda n: f"field {n}")
+    description = factory.Faker("sentence")
+    product_type = factory.SubFactory(ProductFactory)
+
+    class Meta:
+        model = Field
