@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Open Forms\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-23 12:18+0200\n"
+"POT-Creation-Date: 2024-10-25 15:43+0200\n"
 "PO-Revision-Date: 2024-09-13 17:01+0200\n"
 "Last-Translator: Sergei Maertens <sergei+local@maykinmedia.nl>\n"
 "Language-Team: Dutch <support@maykinmedia.nl>\n"
@@ -3389,7 +3389,7 @@ msgid "House number to use in search"
 msgstr "Huisnummer om naar te zoeken"
 
 #: openforms/contrib/kadaster/api/serializers.py:18
-#: openforms/formio/components/custom.py:429
+#: openforms/formio/components/custom.py:439
 msgid "street name"
 msgstr "straatnaam"
 
@@ -3398,7 +3398,7 @@ msgid "Found street name"
 msgstr "Gevonden straatnaam"
 
 #: openforms/contrib/kadaster/api/serializers.py:20
-#: openforms/formio/components/custom.py:435
+#: openforms/formio/components/custom.py:445
 msgid "city"
 msgstr "stad"
 
@@ -3407,12 +3407,12 @@ msgid "Found city"
 msgstr "Gevonden stad"
 
 #: openforms/contrib/kadaster/api/serializers.py:22
-#: openforms/formio/components/custom.py:441
+#: openforms/formio/components/custom.py:451
 msgid "city and street name secret"
 msgstr "gedeeld geheim straatnaam en stad"
 
 #: openforms/contrib/kadaster/api/serializers.py:23
-#: openforms/formio/components/custom.py:442
+#: openforms/formio/components/custom.py:452
 msgid "Secret for the combination of city and street name"
 msgstr "Gedeeld geheim voor de combinatie van stad en straatnaam"
 
@@ -5133,7 +5133,7 @@ msgid "Formio integration"
 msgstr "Form.io-integratie"
 
 #: openforms/formio/components/custom.py:247
-#: openforms/formio/components/custom.py:583
+#: openforms/formio/components/custom.py:593
 #: openforms/formio/components/vanilla.py:119
 #: openforms/formio/components/vanilla.py:306
 msgid "This value does not match the required pattern."
@@ -5143,23 +5143,23 @@ msgstr "De waarde komt niet overeen met het verwachte patroon."
 msgid "Selecting family members is currently not available."
 msgstr "Het selecteren van gezinsleden is momenteel niet beschikbaar."
 
-#: openforms/formio/components/custom.py:430
+#: openforms/formio/components/custom.py:440
 msgid "Derived street name"
 msgstr "Afgeleide straatnaam"
 
-#: openforms/formio/components/custom.py:436
+#: openforms/formio/components/custom.py:446
 msgid "Derived city"
 msgstr "Afgeleide stad"
 
-#: openforms/formio/components/custom.py:458
+#: openforms/formio/components/custom.py:468
 msgid "City does not match the specified pattern."
 msgstr "De stad komt niet overeen met het verwachtte patroon."
 
-#: openforms/formio/components/custom.py:470
+#: openforms/formio/components/custom.py:480
 msgid "Postcode does not match the specified pattern."
 msgstr "De postcode komt niet overeen met het verwachtte patroon."
 
-#: openforms/formio/components/custom.py:497
+#: openforms/formio/components/custom.py:507
 msgid "Invalid secret city - street name combination"
 msgstr "Ongeldige waarde voor sleutel voor de stad/straat-combinatie."
 
@@ -9141,6 +9141,10 @@ msgid ""
 msgstr ""
 "Het mede-ondertekencomponent vereist de configuratie van "
 "'{field_label}' ({config_verbose_name})."
+
+#: openforms/products/admin/product.py:34
+msgid "{} form(s) generated {}"
+msgstr ""
 
 #: openforms/products/api/viewsets.py:15
 msgid "Retrieve details of a single product"
