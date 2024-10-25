@@ -7,6 +7,7 @@ from zgw_consumers.client import build_client
 
 from openforms.contrib.open_producten.models import OpenProductenConfig
 
+from ...utils.api_clients import pagination_helper
 from .api_models import Field, ProductType
 
 logger = logging.getLogger(__name__)
@@ -35,12 +36,16 @@ class OpenProductenClient(APIClient):
             response.raise_for_status()
         except requests.RequestException as exc:
             logger.exception(
-                "exception while making KVK basisprofiel request", exc_info=exc
+                "exception while fetching fields for product_type_uuid {}".format(
+                    product_type_uuid
+                ),
+                exc_info=exc,
             )
             raise exc
 
         data = response.json()
-        fields = factory(Field, data)
+        all_data = list(pagination_helper(self, data))
+        fields = factory(Field, all_data)
 
         return fields
 

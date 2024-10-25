@@ -2,13 +2,21 @@ from datetime import date
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase
+
+import requests
 
 from openforms.forms.models import Form, FormDefinition, FormStep
 from openforms.products.tests.factories import ProductFactory
 
 from ..api_models import Field, FieldTypes
-from ..generate_form import _generate_configuration, generate_form
+from ..client import NoServiceConfigured
+from ..generate_form import (
+    FormGenerationException,
+    _generate_configuration,
+    generate_product_form,
+)
 from .factories import PriceOptionFactory
 
 
@@ -34,7 +42,7 @@ class TestFormGeneration(TestCase):
         )
 
     def test_generate_configuration_with_textfield(self):
-        field = _create_field(id=uuid4(), type=FieldTypes.TEXTFIELD)
+        field = _create_field(id=uuid4(), type=FieldTypes.TEXTFIELD.value)
         configuration = _generate_configuration([field])
 
         self.assertEqual(
@@ -49,7 +57,7 @@ class TestFormGeneration(TestCase):
                     },
                     {
                         "label": field.name,
-                        "type": field.type.value,
+                        "type": field.type,
                         "key": field.name,
                         "description": field.description,
                     },
@@ -58,7 +66,9 @@ class TestFormGeneration(TestCase):
         )
 
     def test_generate_configuration_with_required_field(self):
-        field = _create_field(id=uuid4(), type=FieldTypes.TEXTFIELD, is_required=True)
+        field = _create_field(
+            id=uuid4(), type=FieldTypes.TEXTFIELD.value, is_required=True
+        )
         configuration = _generate_configuration([field])
 
         self.assertEqual(
@@ -73,7 +83,7 @@ class TestFormGeneration(TestCase):
                     },
                     {
                         "label": field.name,
-                        "type": field.type.value,
+                        "type": field.type,
                         "key": field.name,
                         "description": field.description,
                         "validate": {"required": True},
@@ -83,7 +93,9 @@ class TestFormGeneration(TestCase):
         )
 
     def test_generate_configuration_with_select(self):
-        field = _create_field(id=uuid4(), type=FieldTypes.SELECT, choices=["a", "b"])
+        field = _create_field(
+            id=uuid4(), type=FieldTypes.SELECT.value, choices=["a", "b"]
+        )
         configuration = _generate_configuration([field])
 
         self.assertEqual(
@@ -98,7 +110,7 @@ class TestFormGeneration(TestCase):
                     },
                     {
                         "label": field.name,
-                        "type": field.type.value,
+                        "type": field.type,
                         "key": field.name,
                         "description": field.description,
                         "data": {
@@ -113,7 +125,9 @@ class TestFormGeneration(TestCase):
         )
 
     def test_generate_configuration_with_radio(self):
-        field = _create_field(id=uuid4(), type=FieldTypes.RADIO, choices=["a", "b"])
+        field = _create_field(
+            id=uuid4(), type=FieldTypes.RADIO.value, choices=["a", "b"]
+        )
         configuration = _generate_configuration([field])
 
         self.assertEqual(
@@ -128,7 +142,7 @@ class TestFormGeneration(TestCase):
                     },
                     {
                         "label": field.name,
-                        "type": field.type.value,
+                        "type": field.type,
                         "key": field.name,
                         "description": field.description,
                         "values": [
@@ -147,17 +161,20 @@ class TestFormGeneration(TestCase):
         client_mock.get_product_type_fields.return_value = [
             _create_field(
                 id=uuid4(),
-                type=FieldTypes.TEXTFIELD,
+                type=FieldTypes.TEXTFIELD.value,
                 is_required=True,
                 name="name",
                 description="name textfield",
             ),
             _create_field(
-                id=uuid4(), type=FieldTypes.DATE, name="date", description="datefield"
+                id=uuid4(),
+                type=FieldTypes.DATE.value,
+                name="date",
+                description="datefield",
             ),
             _create_field(
                 id=uuid4(),
-                type=FieldTypes.SELECT_BOXES,
+                type=FieldTypes.SELECT_BOXES.value,
                 name="select boxes",
                 description="select boxes",
                 choices=["a", "b"],
@@ -165,7 +182,7 @@ class TestFormGeneration(TestCase):
         ]
         mock_get_client.return_value = client_mock
 
-        generate_form(self.product)
+        generate_product_form(self.product)
 
         self.assertEqual(Form.objects.count(), 1)
         self.assertEqual(FormStep.objects.count(), 1)
@@ -214,3 +231,59 @@ class TestFormGeneration(TestCase):
                 ]
             },
         )
+
+    @patch(
+        "openforms.contrib.open_producten.generate_form.get_open_producten_client",
+        new=Mock(side_effect=NoServiceConfigured),
+    )
+    def test_generate_form_with_no_service_configured(self):
+        with self.assertRaisesMessage(
+            FormGenerationException, "No open producten service configured."
+        ):
+            generate_product_form(self.product)
+
+    @patch("openforms.contrib.open_producten.generate_form.get_open_producten_client")
+    def test_generate_form_with_request_exception(self, mock_get_client):
+
+        client_mock = Mock()
+        client_mock.get_product_type_fields.side_effect = requests.RequestException
+        mock_get_client.return_value = client_mock
+
+        with self.assertRaisesMessage(
+            FormGenerationException,
+            f"product type {self.product.name} fields request to Open Producten failed.",
+        ):
+            generate_product_form(self.product)
+
+    @patch(
+        "openforms.contrib.open_producten.generate_form.get_open_producten_client",
+        new=Mock(),
+    )
+    @patch(
+        "openforms.contrib.open_producten.generate_form._generate_configuration",
+        new=Mock(),
+    )
+    @patch(
+        "openforms.contrib.open_producten.generate_form.FormIOComponentsValidator",
+        new=Mock(side_effect=ValidationError("test")),
+    )
+    def test_generate_form_with_validation_error(self):
+        with self.assertRaisesMessage(
+            FormGenerationException,
+            f"generated configuration for product {self.product.name} is invalid.",
+        ):
+            generate_product_form(self.product)
+
+    @patch(
+        "openforms.contrib.open_producten.generate_form.get_open_producten_client",
+        new=Mock(),
+    )
+    @patch(
+        "openforms.contrib.open_producten.generate_form._generate_configuration",
+        new=Mock(side_effect=IndexError),
+    )
+    def test_generate_form_with_index_error(self):
+        with self.assertRaisesMessage(
+            FormGenerationException, "Something went wrong while generating forms."
+        ):
+            generate_product_form(self.product)

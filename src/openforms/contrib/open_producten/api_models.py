@@ -59,6 +59,6 @@ class Field(Model):
     id: str
     name: str
     description: str
-    type: FieldTypes
+    type: str
     is_required: bool
     choices: list[str]
