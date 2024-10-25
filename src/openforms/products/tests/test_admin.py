@@ -5,12 +5,15 @@ from django.http import HttpRequest
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from maykin_2fa.test import disable_admin_mfa
+
 from openforms.accounts.tests.factories import SuperUserFactory
 from openforms.contrib.open_producten.generate_form import FormGenerationException
 from openforms.contrib.open_producten.tests.factories import PriceFactory
 from openforms.products.tests.factories import ProductFactory
 
 
+@disable_admin_mfa()
 @override_settings(LANGUAGE_CODE="en")
 class TestProductAdmin(TestCase):
 
@@ -32,12 +35,10 @@ class TestProductAdmin(TestCase):
 
         response = self.client.post(self.url, data, follow=True)
 
-        mock_generate_product_form.assert_called_once()
         self.assertEqual(response.status_code, 200)
+        mock_generate_product_form.assert_called_once()
         self.assertContains(response, "1 form(s) generated")
         self.assertNotContains(response, "error")
-
-        self.client.logout()
 
     @patch("openforms.products.admin.product.generate_product_form")
     def test_generate_form_action_with_product_that_has_no_price(
@@ -48,8 +49,8 @@ class TestProductAdmin(TestCase):
 
         response = self.client.post(self.url, data, follow=True)
 
-        mock_generate_product_form.assert_not_called()
         self.assertEqual(response.status_code, 200)
+        mock_generate_product_form.assert_not_called()
         self.assertContains(response, "0 form(s) generated")
         self.assertNotContains(response, "error")
 
@@ -67,8 +68,8 @@ class TestProductAdmin(TestCase):
 
         response = self.client.post(self.url, data, follow=True)
 
-        mock_generate_product_form.assert_called_once()
         self.assertEqual(response.status_code, 200)
+        mock_generate_product_form.assert_called_once()
         self.assertContains(response, "0 form(s) generated")
         self.assertContains(response, "error")
         self.assertContains(response, "Test error")
@@ -91,7 +92,7 @@ class TestProductAdmin(TestCase):
 
         response = self.client.post(self.url, data, follow=True)
 
-        mock_generate_product_form.assert_called_once()
         self.assertEqual(response.status_code, 200)
+        mock_generate_product_form.assert_called_once()
         self.assertContains(response, "1 form(s) generated")
         self.assertNotContains(response, "error")
