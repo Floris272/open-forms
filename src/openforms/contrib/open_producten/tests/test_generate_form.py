@@ -154,6 +154,12 @@ class TestFormGeneration(TestCase):
             },
         )
 
+    def test_generate_form_configuration_with_unknown_type(self):
+        field = _create_field(id=uuid4(), type="unknown")
+
+        with self.assertRaisesMessage(ValidationError, "Unknown field type unknown"):
+            _generate_configuration([field])
+
     @patch("openforms.contrib.open_producten.generate_form.get_open_producten_client")
     def test_generate_form(self, mock_get_client):
 
