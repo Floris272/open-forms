@@ -1,10 +1,17 @@
+import logging
+
+from django.core.exceptions import ValidationError
 from django.db import transaction
+
+import requests
 
 from ...forms.api.validators import FormIOComponentsValidator
 from ...forms.models import Form, FormDefinition, FormStep
 from .api_models import Field, FieldTypes
-from .client import get_open_producten_client
+from .client import NoServiceConfigured, get_open_producten_client
 from .models import ProductType
+
+logger = logging.getLogger(__name__)
 
 
 def _generate_configuration(fields: list[Field]) -> dict:
@@ -18,8 +25,12 @@ def _generate_configuration(fields: list[Field]) -> dict:
     ]
 
     for field in fields:
+
+        if field.type not in (field_type.value for field_type in FieldTypes):
+            raise ValidationError(f"Unknown field type {field.type}")
+
         component = {
-            "type": field.type.value,
+            "type": field.type,
             "key": field.name,
             "label": field.name,
             "description": field.description,
@@ -28,14 +39,14 @@ def _generate_configuration(fields: list[Field]) -> dict:
         if field.is_required:
             component["validate"] = {"required": True}
 
-        if field.type == FieldTypes.SELECT:
+        if FieldTypes(field.type) == FieldTypes.SELECT:
             component["data"] = {
                 "values": [
                     {"label": choice, "value": choice} for choice in field.choices
                 ]
             }
 
-        elif field.type in (FieldTypes.RADIO, FieldTypes.SELECT_BOXES):
+        elif FieldTypes(field.type) in (FieldTypes.RADIO, FieldTypes.SELECT_BOXES):
             component["values"] = [
                 {"label": choice, "value": choice} for choice in field.choices
             ]
@@ -45,25 +56,52 @@ def _generate_configuration(fields: list[Field]) -> dict:
     return {"components": components}
 
 
+class FormGenerationException(Exception):
+    def __init__(self, message: str, *args, **kwargs):
+        self.message = message
+        super().__init__(message, *args, **kwargs)
+
+
 @transaction.atomic()
-def generate_form(product_type: ProductType) -> Form:
-    open_producten_client = get_open_producten_client()
+def generate_product_form(product_type: ProductType):
+    try:
+        open_producten_client = get_open_producten_client()
 
-    fields = open_producten_client.get_product_type_fields(product_type.uuid)
-    configuration = _generate_configuration(fields)
+        fields = open_producten_client.get_product_type_fields(product_type.uuid)
+        configuration = _generate_configuration(fields)
 
-    validator = FormIOComponentsValidator()
-    validator(configuration)  # TODO does this work?
+        validator = FormIOComponentsValidator()
+        validator(configuration)
 
-    form_definition = FormDefinition.objects.create(
-        name=f"{product_type.name} form definition", configuration=configuration
-    )
-    form = Form.objects.create(
-        name=f"{product_type.name} form",
-        active=False,
-        maintenance_mode=True,
-        product=product_type,
-    )
-    FormStep.objects.create(form=form, form_definition=form_definition)
+        form_definition = FormDefinition.objects.create(
+            name=f"{product_type.name} form definition", configuration=configuration
+        )
+        form = Form.objects.create(
+            name=f"{product_type.name} form",
+            active=False,
+            maintenance_mode=True,
+            product=product_type,
+        )
+        FormStep.objects.create(form=form, form_definition=form_definition)
 
-    return form
+    except NoServiceConfigured:
+        raise FormGenerationException("No open producten service configured.")
+    except requests.RequestException as exc:
+        logger.error(
+            f"form generation for product type {product_type.name} failed on fields request for",
+            exc_info=exc,
+        )
+        raise FormGenerationException(
+            f"product type {product_type.name} fields request to Open Producten failed."
+        )
+    except ValidationError as exc:
+        logger.error(
+            f"form generation for product type {product_type.name} failed on configuration validation",
+            exc_info=exc,
+        )
+        raise FormGenerationException(
+            f"generated configuration for product {product_type.name} is invalid."
+        )
+    except Exception as exc:
+        logger.error("form generation failed", exc_info=exc)
+        raise FormGenerationException("Something went wrong while generating forms.")
