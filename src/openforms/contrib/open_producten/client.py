@@ -6,8 +6,9 @@ from zgw_consumers.api_models.base import factory
 from zgw_consumers.client import build_client
 
 from openforms.contrib.open_producten.models import OpenProductenConfig
+from openforms.forms.models import Form
+from openforms.utils.api_clients import pagination_helper
 
-from ...utils.api_clients import pagination_helper
 from .api_models import Field, ProductType
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,20 @@ class OpenProductenClient(APIClient):
         fields = factory(Field, all_data)
 
         return fields
+
+    def set_product_type_form_link(self, product_type_uuid, form: Form):
+        data = {"open_forms_slug": form.slug}
+        try:
+            response = self.patch(f"producttypes/{product_type_uuid}/", json=data)
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            logger.exception(
+                "exception while setting form_link for product_type_uuid {}".format(
+                    product_type_uuid
+                ),
+                exc_info=exc,
+            )
+            raise exc
 
 
 class NoServiceConfigured(RuntimeError):

@@ -5,8 +5,9 @@ from django.db import transaction
 
 import requests
 
-from ...forms.api.validators import FormIOComponentsValidator
-from ...forms.models import Form, FormDefinition, FormStep
+from openforms.forms.api.validators import FormIOComponentsValidator
+from openforms.forms.models import Form, FormDefinition, FormStep
+
 from .api_models import Field, FieldTypes
 from .client import NoServiceConfigured, get_open_producten_client
 from .models import ProductType
@@ -77,23 +78,22 @@ def generate_product_form(product_type: ProductType):
             name=f"{product_type.name} form definition", configuration=configuration
         )
         form = Form.objects.create(
-            name=f"{product_type.name} form",
+            name_en=f"{product_type.name} form",
+            name_nl=f"{product_type.name} formulier",
             active=False,
             maintenance_mode=True,
             product=product_type,
         )
         FormStep.objects.create(form=form, form_definition=form_definition)
 
+        open_producten_client.set_product_type_form_link(product_type.uuid, form)
+
     except NoServiceConfigured:
         raise FormGenerationException("No open producten service configured.")
     except requests.RequestException as exc:
-        logger.error(
-            f"form generation for product type {product_type.name} failed on fields request for",
-            exc_info=exc,
-        )
         raise FormGenerationException(
-            f"product type {product_type.name} fields request to Open Producten failed."
-        )
+            f"product type {product_type.name} request(s) to Open Producten failed."
+        ) from exc
     except ValidationError as exc:
         logger.error(
             f"form generation for product type {product_type.name} failed on configuration validation",
@@ -101,7 +101,9 @@ def generate_product_form(product_type: ProductType):
         )
         raise FormGenerationException(
             f"generated configuration for product {product_type.name} is invalid."
-        )
+        ) from exc
     except Exception as exc:
         logger.error("form generation failed", exc_info=exc)
-        raise FormGenerationException("Something went wrong while generating forms.")
+        raise FormGenerationException(
+            "Something went wrong while generating forms."
+        ) from exc

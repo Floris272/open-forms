@@ -237,6 +237,7 @@ class TestFormGeneration(TestCase):
                 ]
             },
         )
+        client_mock.set_product_type_form_link.assert_called_once()
 
     @patch(
         "openforms.contrib.open_producten.generate_form.get_open_producten_client",
@@ -257,7 +258,7 @@ class TestFormGeneration(TestCase):
 
         with self.assertRaisesMessage(
             FormGenerationException,
-            f"product type {self.product.name} fields request to Open Producten failed.",
+            f"product type {self.product.name} request(s) to Open Producten failed.",
         ):
             generate_product_form(self.product)
 

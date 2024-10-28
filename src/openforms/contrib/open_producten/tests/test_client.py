@@ -10,6 +10,7 @@ from openforms.contrib.open_producten.client import (
     get_open_producten_client,
 )
 from openforms.contrib.open_producten.models import OpenProductenConfig
+from openforms.forms.tests.factories import FormFactory
 from openforms.products.tests.factories import ProductFactory
 
 
@@ -123,3 +124,27 @@ class TestOpenProductenClient(TestCase):
 
         with self.assertRaises(requests.RequestException):
             self.client.get_product_type_fields(product.uuid)
+
+    def test_set_product_type_form_link(self):
+        form = FormFactory()
+        product = ProductFactory()
+        mock = self.requests_mock.patch(
+            json={"id": "35857b78-0bd4-42f8-8ed8-a8088a61545f"},
+            status_code=200,
+            url=f"https://test/producttypes/{product.uuid}/",
+        )
+
+        self.client.set_product_type_form_link(product.uuid, form)
+        self.assertEqual(mock.last_request.json(), {"open_forms_slug": form.slug})
+
+    def test_set_product_type_form_link_with_request_exception(self):
+        form = FormFactory()
+        product = ProductFactory()
+        self.requests_mock.patch(
+            status_code=404,
+            json={"error": "not found"},
+            url=f"https://test/producttypes/{product.uuid}/",
+        )
+
+        with self.assertRaises(requests.RequestException):
+            self.client.set_product_type_form_link(product.uuid, form)
