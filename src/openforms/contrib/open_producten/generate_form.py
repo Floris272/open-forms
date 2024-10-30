@@ -75,9 +75,13 @@ def generate_product_form(product_type: ProductType):
         validator(configuration)
 
         form_definition = FormDefinition.objects.create(
-            name=f"{product_type.name} form definition", configuration=configuration
+            name=f"{product_type.name} stap",
+            name_en=f"{product_type.name} step",
+            name_nl=f"{product_type.name} stap",
+            configuration=configuration,
         )
         form = Form.objects.create(
+            name=f"{product_type.name} formulier",
             name_en=f"{product_type.name} form",
             name_nl=f"{product_type.name} formulier",
             active=False,
