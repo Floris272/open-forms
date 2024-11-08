@@ -42,7 +42,7 @@ class TestOpenProductenClient(TestCase):
                 },
             },
             status_code=200,
-            url="https://test/producttypes/current-prices",
+            url="https://test/producttypes/current-prices/",
         )
 
         product_type = self.client.get_current_prices()
@@ -61,7 +61,7 @@ class TestOpenProductenClient(TestCase):
         self.requests_mock.get(
             status_code=404,
             json={"error": "not found"},
-            url="https://test/producttypes/current-prices",
+            url="https://test/producttypes/current-prices/",
         )
 
         with self.assertRaises(requests.RequestException):
@@ -101,7 +101,7 @@ class TestOpenProductenClient(TestCase):
                 ],
             },
             status_code=200,
-            url=f"https://test/producttypes/{product.uuid}/fields",
+            url=f"https://test/producttypes/{product.uuid}/fields/",
         )
 
         fields = self.client.get_product_type_fields(product.uuid)
@@ -119,7 +119,7 @@ class TestOpenProductenClient(TestCase):
         self.requests_mock.get(
             status_code=404,
             json={"error": "not found"},
-            url=f"https://test/producttypes/{product.uuid}/fields",
+            url=f"https://test/producttypes/{product.uuid}/fields/",
         )
 
         with self.assertRaises(requests.RequestException):
