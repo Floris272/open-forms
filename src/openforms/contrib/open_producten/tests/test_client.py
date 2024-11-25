@@ -10,6 +10,8 @@ from openforms.contrib.open_producten.client import (
     get_open_producten_client,
 )
 from openforms.contrib.open_producten.models import OpenProductenConfig
+from openforms.forms.tests.factories import FormFactory
+from openforms.products.tests.factories import ProductFactory
 
 
 class TestOpenProductenClient(TestCase):
@@ -40,7 +42,7 @@ class TestOpenProductenClient(TestCase):
                 },
             },
             status_code=200,
-            url="https://test/producttypes/current-prices",
+            url="https://test/producttypes/current-prices/",
         )
 
         product_type = self.client.get_current_prices()
@@ -59,7 +61,7 @@ class TestOpenProductenClient(TestCase):
         self.requests_mock.get(
             status_code=404,
             json={"error": "not found"},
-            url="https://test/producttypes/current-prices",
+            url="https://test/producttypes/current-prices/",
         )
 
         with self.assertRaises(requests.RequestException):
@@ -79,3 +81,70 @@ class TestOpenProductenClient(TestCase):
 
         client = get_open_producten_client()
         self.assertEqual(client.base_url, "http://test/")
+
+    def test_product_type_fields(self):
+        product = ProductFactory()
+        self.requests_mock.get(
+            json={
+                "count": 1,
+                "next": None,
+                "previous": None,
+                "results": [
+                    {
+                        "id": "d4fd8fb8-8b7a-45bf-8b93-969c23573af9",
+                        "name": "text",
+                        "description": "text",
+                        "type": "textfield",
+                        "is_required": None,
+                        "choices": [],
+                    }
+                ],
+            },
+            status_code=200,
+            url=f"https://test/producttypes/{product.uuid}/fields/",
+        )
+
+        fields = self.client.get_product_type_fields(product.uuid)
+
+        self.assertEqual(len(fields), 1)
+
+        field = fields[0]
+
+        self.assertEqual(field.name, "text")
+        self.assertEqual(field.type, "textfield")
+
+    def test_get_product_type_fields_with_request_exception(self):
+        product = ProductFactory()
+
+        self.requests_mock.get(
+            status_code=404,
+            json={"error": "not found"},
+            url=f"https://test/producttypes/{product.uuid}/fields/",
+        )
+
+        with self.assertRaises(requests.RequestException):
+            self.client.get_product_type_fields(product.uuid)
+
+    def test_set_product_type_form_link(self):
+        form = FormFactory()
+        product = ProductFactory()
+        mock = self.requests_mock.patch(
+            json={"id": "35857b78-0bd4-42f8-8ed8-a8088a61545f"},
+            status_code=200,
+            url=f"https://test/producttypes/{product.uuid}/",
+        )
+
+        self.client.set_product_type_form_link(product.uuid, form)
+        self.assertEqual(mock.last_request.json(), {"open_forms_slug": form.slug})
+
+    def test_set_product_type_form_link_with_request_exception(self):
+        form = FormFactory()
+        product = ProductFactory()
+        self.requests_mock.patch(
+            status_code=404,
+            json={"error": "not found"},
+            url=f"https://test/producttypes/{product.uuid}/",
+        )
+
+        with self.assertRaises(requests.RequestException):
+            self.client.set_product_type_form_link(product.uuid, form)

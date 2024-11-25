@@ -23,8 +23,8 @@ class Command(BaseCommand):
             updated,
         ) = price_importer.import_product_types()
 
-        self.stdout.write(f"updated {len(updated)} exising product type(s)")
-        self.stdout.write(f"created {len(created)} new product type(s):\n")
+        self.stdout.write(f"updated {len(updated)} exising object(s)")
+        self.stdout.write(f"created {len(created)} new object(s):\n")
 
         for instance in created:
             self.stdout.write(f"{type(instance).__name__}: {instance.uuid}")

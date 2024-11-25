@@ -57,5 +57,5 @@ class TestImportPrices(TestCase):
 
         self.assertEqual(
             out,
-            f"updated 0 exising product type(s)\ncreated 3 new product type(s):\nProduct: {uuid}\nPrice: {uuid}\nPriceOption: {uuid}\n",
+            f"updated 0 exising object(s)\ncreated 3 new object(s):\nProduct: {uuid}\nPrice: {uuid}\nPriceOption: {uuid}\n",
         )
